@@ -28,6 +28,7 @@ const ARREARS_DAYS = 30;
 const OVERSTAY_GRACE_DAYS = 0;
 
 const TERMS = ['annual', 'monthly', 'casual'];
+const SOURCE_WORDS = { licence: 'berth fees', casual: 'visitor nights', haulout: 'lift', hardstand: 'hardstand', power: 'power', job: 'yard job', other: 'other' };
 const KINDS = ['berth', 'pile', 'mooring', 'dry_stack'];
 
 const RULES = [
@@ -737,7 +738,7 @@ async function invoiceRun(flags) {
   result.sort((a, b) => a.invoice.localeCompare(b.invoice));
   const total = result.reduce((a, r) => a + r.net_cents, 0);
   out({ through, dry_run: !!flags['dry-run'], invoices: result, net_cents: total }, (d) => heading(`${d.dry_run ? 'Dry run: would draft' : 'Drafted'} ${d.invoices.length} invoices for everything up to ${d.through}`) + '\n' +
-    table(d.invoices, [{ key: 'invoice', label: 'Invoice' }, { key: 'customer', label: 'Customer' }, { key: 'lines', label: 'Lines', align: 'right' }, { key: 'sources', label: 'For', format: (v) => v.join(', ') },
+    table(d.invoices, [{ key: 'invoice', label: 'Invoice' }, { key: 'customer', label: 'Customer' }, { key: 'lines', label: 'Lines', align: 'right' }, { key: 'sources', label: 'For', format: (v) => v.map((x) => SOURCE_WORDS[x] || x).join(', ') },
       { key: 'net_cents', label: 'Net', align: 'right', format: money }, { key: 'gst_cents', label: 'GST', align: 'right', format: money }]) +
     `\n\n  ${money(d.net_cents)} before GST. ${d.dry_run ? 'Nothing written.' : 'Drafts only: check them, then marina issue --all. Nothing is sent.'}`);
 }
