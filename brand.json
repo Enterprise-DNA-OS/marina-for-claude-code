@@ -1,10 +1,10 @@
 {
   "_": "Your business on every document and view. Change these and run `npm run docs` or `npm run view`.",
-  "business_name": "Your Business",
+  "business_name": "Kotare Bay Marina Ltd",
   "logo_path": "",
-  "primary": "#6654f5",
-  "accent": "#ca5a8b",
-  "ink": "#0b0c18",
+  "primary": "#0d4f6c",
+  "accent": "#2fa3a0",
+  "ink": "#0e1a22",
   "paper": "#ffffff",
-  "footer_line": "Prepared with Marina for Claude Code."
+  "footer_line": "Kotare Bay Marina Ltd, Northland. Prepared with Marina for Claude Code."
 }

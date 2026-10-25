@@ -1,11 +1,72 @@
 [
   {
-    "name": "example",
-    "title": "TODO(author): the first document this industry must produce",
-    "for_each": "select gen_random_uuid() as id, 'Example' as name",
-    "file": "name",
+    "name": "tax-invoice",
+    "title": "Tax invoice",
+    "for_each": "select i.id, i.number || ' ' || c.full_name as label from invoices i join customers c on c.id = i.customer_id where i.status in ('draft', 'issued') order by i.number",
+    "file": "label",
     "sections": [
-      { "title": "Details", "sql": "select 'replace me' as item, $1::text as record_id" }
+      {
+        "title": "Invoice",
+        "sql": "select s.business_name as supplier, s.gst_number as gst_number, t.number as invoice, t.customer as to, c.address, t.issued_on as date, t.due_on as due, case when t.status = 'draft' then 'DRAFT, NOT ISSUED' else '' end as status from invoice_totals t join customers c on c.id = t.customer_id cross join settings s where t.id = $1"
+      },
+      {
+        "title": "Charges",
+        "sql": "select description, qty, to_char(unit_cents / 100.0, 'FM$999,999,990.00') as rate, to_char(amount_cents / 100.0, 'FM$999,999,990.00') as amount from invoice_lines where invoice_id = $1 order by created_at"
+      },
+      {
+        "title": "Total",
+        "note": "Prices exclude GST unless shown. Pay by bank transfer quoting the invoice number.",
+        "sql": "select to_char(net_cents / 100.0, 'FM$999,999,990.00') as before_gst, to_char(gst_cents / 100.0, 'FM$999,999,990.00') as gst, to_char(total_cents / 100.0, 'FM$999,999,990.00') as total_including_gst, to_char(paid_cents / 100.0, 'FM$999,999,990.00') as paid, to_char((total_cents - paid_cents) / 100.0, 'FM$999,999,990.00') as to_pay from invoice_totals where id = $1"
+      }
+    ]
+  },
+  {
+    "name": "berth-licence",
+    "title": "Berth licence schedule",
+    "for_each": "select l.id, l.number || ' ' || b.code || ' ' || v.name as label from licences l join berths b on b.id = l.berth_id join vessels v on v.id = l.vessel_id where l.status in ('booked', 'active') and l.term <> 'casual' order by l.number",
+    "file": "label",
+    "sections": [
+      {
+        "title": "The parties",
+        "sql": "select s.business_name as licensor, c.full_name as licensee, c.address, c.email, c.phone from licences l join customers c on c.id = l.customer_id cross join settings s where l.id = $1"
+      },
+      {
+        "title": "Berth and term",
+        "sql": "select l.number as licence, b.code as berth, b.kind, b.length_m as max_length_m, b.beam_m as max_beam_m, b.power_amps as power_amps, l.term, l.starts_on as from, l.ends_on as to, to_char(l.rate_cents / 100.0, 'FM$999,999,990.00') || case l.term when 'annual' then ' a year' when 'monthly' then ' a month' else ' a night' end || ' plus GST' as fee from licences l join berths b on b.id = l.berth_id where l.id = $1"
+      },
+      {
+        "title": "The vessel",
+        "sql": "select v.name, v.rego, v.make_model, v.loa_m as length_overall_m, v.beam_m, v.draft_m, v.insurer, v.policy_no, to_char(v.liability_cents / 100.0, 'FM$999,999,990') as liability_cover, v.insurance_expires_on as insured_to, v.ewof_expires_on as electrical_check_to from licences l join vessels v on v.id = l.vessel_id where l.id = $1"
+      },
+      {
+        "title": "Conditions the licensee confirms",
+        "note": "The full terms are the marina's berth licence and marina rules. This schedule records the particulars.",
+        "sql": "select condition from (select 'Third-party liability cover of at least ' || to_char(s.min_liability_cents / 100.0, 'FM$999,999,990') || ' kept in force, certificate supplied on renewal' as condition from settings s union all select 'An electrical check on the vessel and shore power lead every ' || s.ewof_months || ' months while connected to shore power' from settings s union all select 'No one lives aboard more than ' || s.liveaboard_max_nights || ' nights a week without written approval' from settings s union all select 'The vessel named above only, no longer than the berth' ) x where $1::uuid is not null"
+      },
+      {
+        "title": "Signed",
+        "sql": "select coalesce(signed_on::text, '') as licensee_signed_on, '' as licensee_signature, '' as for_the_marina from licences where id = $1"
+      }
+    ]
+  },
+  {
+    "name": "statement",
+    "title": "Statement of account",
+    "for_each": "select c.id, c.code || ' ' || c.full_name as label from customers c join customer_balances b on b.id = c.id where b.owing_cents > 0 order by c.code",
+    "file": "label",
+    "sections": [
+      {
+        "title": "Account",
+        "sql": "select s.business_name as from, c.full_name as to, c.address, current_date as statement_date from customers c cross join settings s where c.id = $1"
+      },
+      {
+        "title": "Invoices not yet paid",
+        "sql": "select number as invoice, issued_on as date, due_on as due, to_char(total_cents / 100.0, 'FM$999,999,990.00') as total, to_char(paid_cents / 100.0, 'FM$999,999,990.00') as paid, to_char((total_cents - paid_cents) / 100.0, 'FM$999,999,990.00') as owing, case when days_overdue > 0 then days_overdue || ' days overdue' else '' end as status from invoice_totals where customer_id = $1 and status = 'issued' and total_cents > paid_cents order by issued_on"
+      },
+      {
+        "title": "Balance",
+        "sql": "select to_char(owing_cents / 100.0, 'FM$999,999,990.00') as total_owing, to_char((overdue_1_30_cents + overdue_31_60_cents + overdue_60_plus_cents) / 100.0, 'FM$999,999,990.00') as of_which_overdue from customer_balances where id = $1"
+      }
     ]
   }
 ]

@@ -1,14 +1,36 @@
 [
   {
     "name": "week",
-    "title": "This week",
-    "subtitle": "Marina for Claude Code: what needs attention, rendered by npm run view",
+    "title": "The marina this week",
+    "subtitle": "Berths, visitors, the yard and what needs a decision",
     "sections": [
-      {
-        "title": "Needs attention",
-        "note": "TODO(author): point this at the industry's attention view (overdue, stuck, quiet).",
-        "sql": "select 'replace me' as item, 'TODO(author)' as why"
-      }
+      { "title": "Free spaces", "sql": "select code as berth, kind, length_m as length, power_amps as amps from berth_board where occupancy = 'free' order by length_m, code" },
+      { "title": "Visitors in", "sql": "select code as berth, vessel, loa_m as length, holder as skipper, starts_on as arrived, ends_on as leaving from berth_board where term = 'casual' order by ends_on" },
+      { "title": "Haul-outs in the next 7 days", "sql": "select h.number, h.booked_for as date, v.name as vessel, v.weight_t as tonnes, l.code as lift, h.notes from haulouts h join vessels v on v.id = h.vessel_id left join lifts l on l.id = h.lift_id where h.status = 'booked' and h.booked_for <= current_date + 7 order by h.booked_for" },
+      { "title": "On the hardstand", "sql": "select number, vessel, owner, hardstand_bay as bay, hauled_on as out_since, days_out, hardstand_until as back_in_by, days_over, open_jobs from hardstand_now order by days_over desc, hauled_on" },
+      { "title": "Licences ending in 30 days, no renewal", "sql": "select number, berth, vessel, holder, ends_on, days_left from renewals_due where days_left <= 30 order by ends_on" }
+    ]
+  },
+  {
+    "name": "papers",
+    "title": "Papers and rules",
+    "subtitle": "Insurance, electrical checks, liveaboards and lift certificates",
+    "sections": [
+      { "title": "Insurance lapsed or ending in 30 days", "sql": "select name as vessel, owner, insurer, to_char(liability_cents / 100.0, 'FM$999,999,990') as liability_cover, insurance_expires_on as insured_to, insurance_days_left as days_left, case when cover_short then 'cover under the minimum' else '' end as also from vessel_papers where on_berth and (insurance_lapsed or cover_short or insurance_days_left <= 30) order by insurance_days_left" },
+      { "title": "Electrical check lapsed or ending in 30 days", "sql": "select name as vessel, owner, ewof_expires_on as check_to, ewof_days_left as days_left from vessel_papers where on_berth and on_shore_power and (ewof_lapsed or ewof_days_left <= 30) order by ewof_days_left nulls first" },
+      { "title": "Living aboard", "sql": "select name as vessel, owner, liveaboard_approved_until as approved_to, case when liveaboard_unapproved then 'NOT APPROVED' else '' end as status from vessel_papers where liveaboard order by name" },
+      { "title": "Berth holders with an unsigned licence", "sql": "select code as berth, vessel, holder, licence, starts_on from berth_board where occupancy = 'occupied' and signed_on is null" },
+      { "title": "Lift certificates of inspection", "sql": "select code, name, capacity_t as tonnes, certificate_no, certificate_expires_on as expires, certificate_expires_on - current_date as days_left from lifts order by certificate_expires_on" }
+    ]
+  },
+  {
+    "name": "money",
+    "title": "Money",
+    "subtitle": "Who owes what, and the fee roll",
+    "sections": [
+      { "title": "Owing, oldest first", "sql": "select full_name as customer, to_char(owing_cents / 100.0, 'FM$999,999,990') as owing, to_char(overdue_1_30_cents / 100.0, 'FM$999,999,990') as late_1_30, to_char(overdue_31_60_cents / 100.0, 'FM$999,999,990') as late_31_60, to_char(overdue_60_plus_cents / 100.0, 'FM$999,999,990') as late_60_plus, oldest_days_overdue as oldest_days from customer_balances where owing_cents > 0 order by oldest_days_overdue desc nulls last" },
+      { "title": "Draft invoices waiting to be issued", "sql": "select number, customer, to_char(total_cents / 100.0, 'FM$999,999,990.00') as total from invoice_totals where status = 'draft' order by number" },
+      { "title": "Fee roll by pier", "note": "Annual licences at their rate, monthly at twelve months. Visitors not included.", "sql": "select bb.pier, count(*) filter (where bb.occupancy = 'occupied') as taken, count(*) filter (where bb.occupancy = 'free') as free, to_char(coalesce(sum(case when bb.term = 'annual' then l.rate_cents when bb.term = 'monthly' then l.rate_cents * 12 else 0 end), 0) / 100.0, 'FM$999,999,990') as fee_roll_a_year from berth_board bb left join licences l on l.id = bb.licence_id group by bb.pier order by bb.pier" }
     ]
   }
 ]

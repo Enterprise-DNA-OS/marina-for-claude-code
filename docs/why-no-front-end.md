@@ -1,24 +1,21 @@
 # Why there is no front end
 
-PacsoftNG is a database with a subscription. The tables underneath it are ordinary: a few entities, a few relationships, a handful of workflows you repeat every week. What you pay for is the layer on top that lets people who do not write SQL get at those tables. Screens, filters, dashboards, forms.
+PacsoftNG is a database with a licence fee. The tables underneath it are ordinary: berths, berth holders, vessels, contracts, haul-outs, jobs, charges. What you pay for is the layer on top that lets the office find a berth, a boat or a balance without writing a query. Screens, filters, a berth plan, forms.
 
-That layer used to be the whole product, because talking to a database was hard. It is not hard any more. Open this folder in Claude Code, describe what you want, and it writes the query, runs it, and explains the answer. Ask a question the dashboard never had a chart for and you still get an answer.
+That layer used to be the whole product, because talking to a database was hard. It is not hard any more. Open this folder in Claude Code, ask "who on the waiting list fits B06?" or "which boats on shore power have an electrical check out of date?", and it runs the query and answers. Ask a question the vendor never built a report for and you still get an answer.
 
 ## What you gain
 
-- **Better answers.** A dashboard shows what the vendor decided to chart. Here you ask your own question, in your own words, and get it answered against your own data.
-- **No seats.** Everyone who needs to look can look. The bill does not grow with headcount.
-- **Your data in your Postgres.** Plain tables. Back them up, query them from anything, leave any time. There is no export step because there is nothing to leave.
-- **A process that matches you.** When your way of working changes, you add a command. You do not wait for a feature request to clear.
+- **Better answers.** Your own questions, in your own words, against your own records.
+- **No seats and no modules.** The yard, the office and the harbourmaster all look at the same records. Haul-outs, hardstand and power are not extra modules.
+- **Your data in your own database.** Back it up, query it from anything, leave any time.
+- **Your rules.** The minimum cover, the liveaboard rule, how the waiting list is matched: change them by asking.
 
-## What you give up
+## What a screen gives that this does not
 
-- **A visual board.** Stages are a table you ask about, not cards you drag.
-- **A phone app.** It runs where Claude Code runs.
-- **A vendor help desk.** This is open source. Enterprise DNA supports the installed version for businesses that want someone to call.
+- **A visual berth plan.** Here the berth board is a table, and `npm run view` renders it as a page. A drawn map of the piers is a front end.
+- **A phone in the yard.** It runs where Claude Code runs. A yard hand recording hours on a phone at the travel lift wants an app.
+- **Online booking for visitors.** A public booking page is a front end on top of these tables.
+- **A vendor help desk.** This is open source. Enterprise DNA supports the installed version for marinas that want someone to call.
 
-## Who this fits
-
-Small teams who already use Claude Code, or who would rather learn to ask than learn another interface. If your team needs a screen to look at all day, keep PacsoftNG. If you need the answers more than the screens, this is cheaper, faster and yours.
-
-Installed and run for you: https://enterprisedna.co/omni/instead-of/pacsoftng
+Every one of these can be built on top of the same database. That is what Enterprise DNA does when a marina wants it: https://enterprisedna.co/omni/instead-of/pacsoftng
